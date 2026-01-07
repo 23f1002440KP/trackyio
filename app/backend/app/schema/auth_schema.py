@@ -1,0 +1,8 @@
+from marshmallow import Schema, fields, validate
+
+class RegisterSchema(Schema):
+    username = fields.Str(required=True, validate=validate.Length(min=3))
+    password = fields.Str(required=True, validate=validate.Length(min=8))
+
+class LoginSchema(RegisterSchema):
+    pass
