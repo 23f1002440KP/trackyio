@@ -1,0 +1,20 @@
+trackyio
+# .gitignore
+trackio-wireeeframe.png
+
+app/backeend/.venv
+app/backend/app/__pycache__
+
+app/backend/app/blueprints/__pycache__
+app/backend/app/core/__pycache__
+app/backend/app/db/__pycache__
+app/backend/app/models/__pycache__
+app/backend/app/schema/__pycache__
+app/backend/app/utils/__pycache__
+
+app/backend/instance/development.sqlite
+app/backend/.env
+
+app/backend/
+
+
