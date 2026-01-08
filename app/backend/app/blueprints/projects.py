@@ -4,7 +4,9 @@ from flask_jwt_extended import jwt_required,get_jwt_identity,get_jwt
 
 from app.db.extensions import db
 from app.db.models import Project
-from app.blueprints import tasks
+
+from marshmallow.exceptions import ValidationError
+from app.schema.project_schema import ProjectSchema
 
 from datetime import datetime
 
@@ -90,7 +92,7 @@ def project_by(project_id):
 @jwt_required()
 def add_new_project():
     try:  
-        project_data = request.json
+        project_data = ProjectSchema().load(request.json)
         id = get_jwt_identity()
         
                         
@@ -135,10 +137,82 @@ def add_new_project():
         },201
     except Exception as ee :
         return {
-            "meessage":str(ee)
+            "message":str(ee)
         },400
     
    
    
    #TODO : Make a put to update the projects
+@projects_bp.put("/<int:project_id>")
+@jwt_required()
+def update_project(project_id):
+    try:
+        project_data = ProjectSchema().load(request.json)
+        user_id = get_jwt_identity()
+        
+        project = (Project
+                   .query
+                   .filter_by(
+                       id=project_id,
+                       user_id=user_id
+                       )
+                   .first())
+        
+        if project is None :
+            return {
+                "message":"project with this id is not available"
+            },404
+            
+        project.name = project_data['name']
+        project.description = project_data['desc']
+        project.github_link = project_data['github_link']
+        project.due_date = datetime.strptime(project_data['due_date'], "%d-%m-%Y").date()
+        
+        db.session.commit()
+        
+        return {
+            "message":"Project updated successfully"
+        },200
+        
+    except ValidationError as err:
+               return {
+            "error": "Validation failed",
+            "messages": err.messages
+        }, 400
+    except Exception as e :
+        return {
+            "message":str(e)
+        },400
+   
+   
    #TODO : Make a delete to delete the projects   
+@projects_bp.delete("/<int:project_id>")
+@jwt_required()
+def delete_project(project_id):
+    try:
+        user_id = get_jwt_identity()
+        
+        project = (Project
+                   .query
+                   .filter_by(
+                       id=project_id,
+                       user_id=user_id
+                       )
+                   .first())
+        
+        if project is None :
+            return {
+                "message":"project with this id is not available"
+            },404
+            
+        db.session.delete(project)
+        db.session.commit()
+        
+        return {
+            "message":"Project deleted successfully"
+        },200
+        
+    except Exception as e :
+        return {
+            "message":str(e)
+        },400

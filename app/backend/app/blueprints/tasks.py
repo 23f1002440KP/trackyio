@@ -151,8 +151,114 @@ def add_new_tasks(project_id):
     
    
    #TODO : Make a put to update the task
+@tasks_bp.put("/<int:project_id>/task/<int:task_id>")
+@jwt_required()
+def update_task(project_id,task_id):
+    try:
+        user_id = get_jwt_identity()
+        data = request.json
+        
+        if not project_exist(project_id=project_id,user_id=user_id):
+            return {
+                "message":"There is no project with this id"
+            },404
+            
+        task = (Task
+                    .query
+                    .filter_by(
+                        id=task_id,
+                        project_id=project_id
+                    ).first())
+        
+        if not task:
+            return {
+                "message":"There is no task with this id in this project"
+            },404
+            
+        name = data["name"]
+        desc = data["desc"]
+        
+        # Setting Status value  
+        
+        match data["status"]:
+            case "to-do" :
+                status = Status.TO_DO
+            case "in-progress":
+                status = Status.IN_PROGRESS
+            case "done" :
+                status = Status.DONE
+            case _ :
+                return {
+                    "message":"Please provide a valid Status from ['to-do','in-progress','done']"
+                },409
+                
+        # Setting Priority value 
+            
+        match data["priority"]:
+            case "low" :
+                priority  = Priority.LOW
+            case "medium":
+                priority = Priority.MEDIUM
+            case "high" :
+                priority = Priority.HIGH
+            case _ :
+                return {
+                    "message":"Please provide a valid Priority from ['low','medium','high']"
+                },409
+        
+        due_date = data["due_date"]
+        
+        task.name = name
+        task.description = desc
+        task.status = status
+        task.priority = priority
+        task.due_date = datetime.strptime(due_date,"%d-%m-%Y").date()
+        
+        db.session.commit()
+        
+        return {
+            "message":"Task updated successfully"
+        },200
+        
+    except Exception as e :
+        return {
+            "error":str(e)
+        },400
 
    
    
    #TODO : Make a delete to delete the task      
+@tasks_bp.delete("/<int:project_id>/task/<int:task_id>")
+@jwt_required()
+def delete_task(project_id,task_id):
+    try:
+        user_id = get_jwt_identity()
         
+        if not project_exist(project_id=project_id,user_id=user_id):
+            return {
+                "message":"There is no project with this id"
+            },404
+            
+        task = (Task
+                    .query
+                    .filter_by(
+                        id=task_id,
+                        project_id=project_id
+                    ).first())
+        
+        if not task:
+            return {
+                "message":"There is no task with this id in this project"
+            },404
+            
+        db.session.delete(task)
+        db.session.commit()
+        
+        return {
+            "message":"Task deleted successfully"
+        },200
+        
+    except Exception as e :
+        return {
+            "error":str(e)
+        },400

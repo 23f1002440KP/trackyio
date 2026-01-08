@@ -1,5 +1,5 @@
 from .extensions import db
-from .extensions import hash_password, verify_password, needs_rehash
+from .extensions import hash_password, verify_password
 from datetime import date
 from enum import Enum
 
